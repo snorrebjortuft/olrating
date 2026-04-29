@@ -1,1 +1,1 @@
-# olranking
+Ølrating.no
