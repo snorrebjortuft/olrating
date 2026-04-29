@@ -5,364 +5,88 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin – Ølranking</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --gold: #C9A84C;
-      --gold-light: #F5E9C8;
-      --gold-dark: #8B6914;
-      --dark: #1A1208;
-      --dark2: #2D2010;
-      --mid: #6B4F20;
-      --cream: #FAF6EE;
-      --cream2: #F0E8D5;
-      --text: #2D2010;
-      --text-muted: #7A6040;
-      --border: rgba(201,168,76,0.25);
-      --border-solid: #e8d9b5;
-      --radius: 12px;
-      --danger: #c0392b;
+      --gold: #C9A84C; --gold-light: #F5E9C8; --gold-dark: #8B6914;
+      --dark: #1A1208; --mid: #6B4F20;
+      --cream: #FAF6EE; --cream2: #F0E8D5;
+      --text: #2D2010; --text-muted: #7A6040;
+      --border: rgba(201,168,76,0.25); --border-solid: #e8d9b5;
+      --radius: 12px; --danger: #c0392b;
     }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--cream);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    header {
-      background: var(--dark);
-      padding: 1.5rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 2px solid var(--gold);
-    }
-
-    header h1 {
-      font-family: 'Playfair Display', serif;
-      color: var(--gold);
-      font-size: 1.6rem;
-    }
-
-    header h1 span {
-      font-size: 0.8rem;
-      color: rgba(201,168,76,0.6);
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 300;
-      display: block;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    .header-nav {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .header-nav a {
-      color: var(--gold-light);
-      text-decoration: none;
-      font-size: 0.85rem;
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 0.5rem 1rem;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      transition: all 0.2s;
-    }
-
+    header { background: var(--dark); padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--gold); }
+    header h1 { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 1.6rem; }
+    header h1 span { font-size: 0.8rem; color: rgba(201,168,76,0.6); font-family: 'DM Sans', sans-serif; font-weight: 300; display: block; letter-spacing: 0.1em; text-transform: uppercase; }
+    .header-nav { display: flex; align-items: center; gap: 1rem; }
+    .header-nav a { color: var(--gold-light); text-decoration: none; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 6px; transition: all 0.2s; }
     .header-nav a:hover { background: rgba(201,168,76,0.15); }
-
-    #logout-btn {
-      background: rgba(192,57,43,0.2);
-      border: 1px solid rgba(192,57,43,0.4);
-      color: #f09c94;
-      font-size: 0.85rem;
-      font-weight: 500;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      letter-spacing: 0.05em;
-    }
-
+    #logout-btn { background: rgba(192,57,43,0.2); border: 1px solid rgba(192,57,43,0.4); color: #f09c94; font-size: 0.85rem; font-weight: 500; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-family: 'DM Sans', sans-serif; display: none; }
     #logout-btn:hover { background: rgba(192,57,43,0.35); }
 
     main { max-width: 1000px; margin: 0 auto; padding: 2.5rem 2rem; }
 
-    /* LOGIN */
-    #login-screen {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 60vh;
-    }
-
-    .login-box {
-      background: white;
-      border: 1px solid var(--border-solid);
-      border-radius: 16px;
-      padding: 2.5rem;
-      width: 100%;
-      max-width: 380px;
-      text-align: center;
-    }
-
-    .login-box h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.5rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .login-box p {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .login-box input[type="password"] {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border: 1.5px solid var(--border-solid);
-      border-radius: 8px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 1rem;
-      outline: none;
-      color: var(--text);
-      margin-bottom: 1rem;
-      transition: border-color 0.2s;
-    }
-
-    .login-box input[type="password"]:focus { border-color: var(--gold); }
-
-    .btn-primary {
-      background: var(--gold);
-      color: var(--dark);
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 600;
-      font-size: 0.9rem;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      width: 100%;
-      letter-spacing: 0.05em;
-      transition: background 0.2s;
-    }
-
+    #login-screen { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+    .login-box { background: white; border: 1px solid var(--border-solid); border-radius: 16px; padding: 2.5rem; width: 100%; max-width: 380px; text-align: center; }
+    .login-box h2 { font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .login-box p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .login-box input { width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-solid); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 1rem; outline: none; color: var(--text); margin-bottom: 0.75rem; transition: border-color 0.2s; }
+    .login-box input:focus { border-color: var(--gold); }
+    .btn-primary { background: var(--gold); color: var(--dark); font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.9rem; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; width: 100%; transition: background 0.2s; }
     .btn-primary:hover { background: #d4b050; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .login-error { color: var(--danger); font-size: 0.85rem; margin-top: 0.75rem; display: none; }
 
-    .login-error {
-      color: var(--danger);
-      font-size: 0.85rem;
-      margin-top: 0.75rem;
-      display: none;
-    }
-
-    /* ADMIN PANEL */
     #admin-panel { display: none; }
-
-    .panel-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-    }
-
+    .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
     @media (max-width: 700px) { .panel-grid { grid-template-columns: 1fr; } }
 
-    .card {
-      background: white;
-      border: 1px solid var(--border-solid);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-    }
-
-    .card h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.2rem;
-      margin-bottom: 1.25rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border-solid);
-    }
+    .card { background: white; border: 1px solid var(--border-solid); border-radius: var(--radius); padding: 1.5rem; }
+    .card h2 { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-solid); }
 
     .form-group { margin-bottom: 1rem; }
-
-    .form-group label {
-      display: block;
-      font-size: 0.8rem;
-      font-weight: 500;
-      color: var(--text-muted);
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      margin-bottom: 0.35rem;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      padding: 0.6rem 0.9rem;
-      border: 1.5px solid var(--border-solid);
-      border-radius: 8px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.95rem;
-      color: var(--text);
-      background: white;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus { border-color: var(--gold); }
-
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.35rem; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.6rem 0.9rem; border: 1.5px solid var(--border-solid); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--text); background: white; outline: none; transition: border-color 0.2s; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--gold); }
     .form-group textarea { min-height: 90px; resize: vertical; }
 
-    .score-preview {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-top: 0.5rem;
-    }
-
-    .score-num {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.3rem;
-      color: var(--gold-dark);
-      font-weight: 700;
-      min-width: 40px;
-    }
-
+    .score-preview { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.5rem; }
+    .score-num { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--gold-dark); font-weight: 700; min-width: 40px; }
     .stars-preview { color: var(--gold); letter-spacing: 2px; }
-
     input[type="range"] { accent-color: var(--gold); }
 
-    .img-preview {
-      width: 100%;
-      height: 140px;
-      border-radius: 8px;
-      border: 1.5px dashed var(--border-solid);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.5rem;
-      margin-bottom: 0.75rem;
-      overflow: hidden;
-      background: var(--cream2);
-    }
+    .upload-area { border: 2px dashed var(--border-solid); border-radius: 8px; padding: 1.25rem; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; background: var(--cream2); margin-bottom: 0.5rem; }
+    .upload-area:hover, .upload-area.drag-over { border-color: var(--gold); background: var(--gold-light); }
+    .upload-area input[type="file"] { display: none; }
+    .upload-area p { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; }
 
+    .img-preview { width: 100%; height: 140px; border-radius: 8px; border: 1px solid var(--border-solid); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 0.75rem; overflow: hidden; background: var(--cream2); }
     .img-preview img { width: 100%; height: 100%; object-fit: cover; }
 
-    .btn-submit {
-      background: var(--gold);
-      color: var(--dark);
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 600;
-      font-size: 0.9rem;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      width: 100%;
-      letter-spacing: 0.05em;
-      margin-top: 0.5rem;
-      transition: background 0.2s;
-    }
+    .upload-progress { display: none; background: var(--cream2); border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .upload-progress.active { display: block; }
 
+    .btn-submit { background: var(--gold); color: var(--dark); font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.9rem; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; width: 100%; letter-spacing: 0.05em; margin-top: 0.5rem; transition: background 0.2s; }
     .btn-submit:hover { background: #d4b050; }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* LIST */
     .beer-list { display: flex; flex-direction: column; gap: 0.75rem; }
-
-    .beer-list-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem;
-      border: 1px solid var(--border-solid);
-      border-radius: 8px;
-      background: var(--cream);
-    }
-
-    .beer-list-thumb {
-      width: 44px;
-      height: 44px;
-      border-radius: 6px;
-      background: var(--cream2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-
+    .beer-list-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid var(--border-solid); border-radius: 8px; background: var(--cream); }
+    .beer-list-thumb { width: 44px; height: 44px; border-radius: 6px; background: var(--cream2); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; overflow: hidden; }
     .beer-list-thumb img { width: 100%; height: 100%; object-fit: cover; }
-
     .beer-list-info { flex: 1; min-width: 0; }
-
-    .beer-list-name {
-      font-weight: 500;
-      font-size: 0.9rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
+    .beer-list-name { font-weight: 500; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .beer-list-meta { font-size: 0.75rem; color: var(--text-muted); }
-
-    .score-pill {
-      background: var(--gold);
-      color: var(--dark);
-      font-weight: 700;
-      font-size: 0.85rem;
-      padding: 3px 8px;
-      border-radius: 6px;
-      flex-shrink: 0;
-    }
-
-    .btn-delete {
-      background: none;
-      border: 1px solid rgba(192,57,43,0.3);
-      color: var(--danger);
-      border-radius: 6px;
-      width: 28px;
-      height: 28px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      flex-shrink: 0;
-      transition: background 0.2s;
-    }
-
+    .score-pill { background: var(--gold); color: var(--dark); font-weight: 700; font-size: 0.85rem; padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+    .btn-delete { background: none; border: 1px solid rgba(192,57,43,0.3); color: var(--danger); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 0.85rem; flex-shrink: 0; transition: background 0.2s; }
     .btn-delete:hover { background: rgba(192,57,43,0.1); }
+    .empty-list { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.9rem; }
+    .loading-list { text-align: center; padding: 2rem; color: var(--text-muted); }
 
-    .empty-list {
-      text-align: center;
-      padding: 2rem;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-    }
-
-    .success-toast {
-      position: fixed;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: var(--dark);
-      color: var(--gold);
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      border: 1px solid var(--gold);
-      transition: transform 0.3s;
-      z-index: 200;
-    }
-
+    .success-toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--dark); color: var(--gold); padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; border: 1px solid var(--gold); transition: transform 0.3s; z-index: 200; }
     .success-toast.show { transform: translateX(-50%) translateY(0); }
   </style>
 </head>
@@ -372,42 +96,35 @@
   <h1>🍺 Ølranking<span>Admin</span></h1>
   <div class="header-nav">
     <a href="index.html">← Se rankinglisten</a>
-    <button id="logout-btn" onclick="logout()" style="display:none">Logg ut</button>
+    <button id="logout-btn" onclick="logout()">Logg ut</button>
   </div>
 </header>
 
 <main>
-  <!-- LOGIN -->
   <div id="login-screen">
     <div class="login-box">
       <div style="font-size:3rem;margin-bottom:1rem;">🔒</div>
       <h2>Admin-innlogging</h2>
-      <p>Skriv inn passordet for å administrere ølrankinglisten.</p>
-      <input type="password" id="password-input" placeholder="Passord" onkeydown="if(event.key==='Enter')tryLogin()" />
-      <button class="btn-primary" onclick="tryLogin()">Logg inn</button>
-      <div class="login-error" id="login-error">Feil passord. Prøv igjen.</div>
-      <p style="margin-top:1.25rem;font-size:0.75rem;color:var(--text-muted);">Standard passord: <code>olranking2024</code><br>Endre i admin.html etter oppsett.</p>
+      <p>Logg inn med e-post og passord.</p>
+      <input type="email" id="login-email" placeholder="E-post" onkeydown="if(event.key==='Enter')tryLogin()" />
+      <input type="password" id="login-password" placeholder="Passord" onkeydown="if(event.key==='Enter')tryLogin()" />
+      <button class="btn-primary" id="login-btn" onclick="tryLogin()">Logg inn</button>
+      <div class="login-error" id="login-error">Feil e-post eller passord.</div>
     </div>
   </div>
 
-  <!-- ADMIN PANEL -->
   <div id="admin-panel">
     <div class="panel-grid">
-
-      <!-- ADD BEER FORM -->
       <div class="card">
         <h2>Legg til ny øl</h2>
-
         <div class="form-group">
           <label>Navn *</label>
           <input type="text" id="f-name" placeholder="f.eks. Nøgne Ø Imperial Stout" />
         </div>
-
         <div class="form-group">
           <label>Bryggeri</label>
           <input type="text" id="f-brewery" placeholder="f.eks. Nøgne Ø" />
         </div>
-
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
           <div class="form-group">
             <label>Type</label>
@@ -415,15 +132,13 @@
           </div>
           <div class="form-group">
             <label>ABV (%)</label>
-            <input type="number" id="f-abv" placeholder="f.eks. 5.5" step="0.1" min="0" max="100" />
+            <input type="number" id="f-abv" placeholder="5.5" step="0.1" min="0" max="100" />
           </div>
         </div>
-
         <div class="form-group">
           <label>Land</label>
           <input type="text" id="f-country" placeholder="f.eks. Norge" />
         </div>
-
         <div class="form-group">
           <label>Score: <span id="score-display">7</span>/10</label>
           <input type="range" id="f-score" min="1" max="10" value="7" step="1" oninput="updateScore()" />
@@ -432,28 +147,27 @@
             <span class="stars-preview" id="score-stars">★★★½☆</span>
           </div>
         </div>
-
         <div class="form-group">
           <label>Anmeldelse</label>
           <textarea id="f-review" placeholder="Skriv dine tanker om ølen..."></textarea>
         </div>
-
         <div class="form-group">
-          <label>Bilde (URL)</label>
+          <label>Bilde</label>
           <div class="img-preview" id="img-preview">🍺</div>
-          <input type="url" id="f-image" placeholder="https://..." oninput="previewImage()" />
-          <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.35rem">Lim inn bilde-URL, eller last opp til Imgur.com og bruk lenken</p>
+          <div class="upload-area" onclick="document.getElementById('file-input').click()" id="upload-area">
+            <input type="file" id="file-input" accept="image/*" onchange="handleFileSelect(event)" />
+            <div style="font-size:1.5rem">📷</div>
+            <p>Klikk for å velge bilde fra PC</p>
+          </div>
+          <div class="upload-progress" id="upload-progress">⏳ Laster opp bilde...</div>
         </div>
-
-        <button class="btn-submit" onclick="addBeer()">Legg til øl</button>
+        <button class="btn-submit" id="submit-btn" onclick="addBeer()">Legg til øl</button>
       </div>
 
-      <!-- BEER LIST -->
       <div class="card">
         <h2>Alle øl (<span id="beer-count">0</span>)</h2>
-        <div class="beer-list" id="beer-list"></div>
+        <div id="beer-list"><div class="loading-list">Laster...</div></div>
       </div>
-
     </div>
   </div>
 </main>
@@ -461,42 +175,52 @@
 <div class="success-toast" id="toast">✓ Øl lagt til!</div>
 
 <script>
-  const ADMIN_PASSWORD = 'olranking2024';
+  const SUPABASE_URL = 'https://dfbfghwtteqpbjuyypez.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmYmZnaHd0dGVxcGJqdXl5cGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDU4MDMsImV4cCI6MjA5MzAyMTgwM30.Umk2yroHHeJrr3g2sJ_ksSKk6W9sqUXGs9v3dVpPZKA';
 
-  function tryLogin() {
-    const pw = document.getElementById('password-input').value;
-    if (pw === ADMIN_PASSWORD) {
-      sessionStorage.setItem('admin_auth', '1');
-      showAdmin();
-    } else {
-      document.getElementById('login-error').style.display = 'block';
-      document.getElementById('password-input').value = '';
-    }
+  const { createClient } = supabase;
+  const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let uploadedImageUrl = null;
+
+  async function init() {
+    const { data: { session } } = await db.auth.getSession();
+    if (session) showAdmin();
   }
 
-  function logout() {
-    sessionStorage.removeItem('admin_auth');
+  async function tryLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const btn = document.getElementById('login-btn');
+    const errEl = document.getElementById('login-error');
+
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Logger inn...';
+
+    const { error } = await db.auth.signInWithPassword({ email, password });
+
+    btn.disabled = false;
+    btn.textContent = 'Logg inn';
+
+    if (error) { errEl.style.display = 'block'; return; }
+    showAdmin();
+  }
+
+  async function logout() {
+    await db.auth.signOut();
     document.getElementById('admin-panel').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('logout-btn').style.display = 'none';
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-password').value = '';
   }
 
   function showAdmin() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('admin-panel').style.display = 'block';
     document.getElementById('logout-btn').style.display = 'inline-block';
-    renderList();
-  }
-
-  if (sessionStorage.getItem('admin_auth') === '1') showAdmin();
-
-  function getBeers() {
-    try { return JSON.parse(localStorage.getItem('beers') || '[]'); }
-    catch { return []; }
-  }
-
-  function saveBeers(beers) {
-    localStorage.setItem('beers', JSON.stringify(beers));
+    loadList();
   }
 
   function scoreToStars(s) {
@@ -512,76 +236,101 @@
     document.getElementById('score-stars').textContent = scoreToStars(parseInt(s));
   }
 
-  function previewImage() {
-    const url = document.getElementById('f-image').value.trim();
-    const preview = document.getElementById('img-preview');
-    if (url) {
-      preview.innerHTML = `<img src="${url}" alt="Preview" onerror="this.parentElement.innerHTML='🍺'" />`;
-    } else {
-      preview.innerHTML = '🍺';
-    }
+  async function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('img-preview').innerHTML = `<img src="${e.target.result}" alt="Preview" />`;
+    };
+    reader.readAsDataURL(file);
+
+    const progressEl = document.getElementById('upload-progress');
+    progressEl.textContent = '⏳ Laster opp bilde...';
+    progressEl.classList.add('active');
+    document.getElementById('submit-btn').disabled = true;
+
+    const ext = file.name.split('.').pop();
+    const fileName = `${Date.now()}.${ext}`;
+
+    const { error } = await db.storage.from('beer-images').upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+    document.getElementById('submit-btn').disabled = false;
+
+    if (error) { progressEl.textContent = '✗ Opplasting feilet: ' + error.message; return; }
+
+    const { data: urlData } = db.storage.from('beer-images').getPublicUrl(fileName);
+    uploadedImageUrl = urlData.publicUrl;
+    progressEl.textContent = '✓ Bilde lastet opp!';
+    setTimeout(() => progressEl.classList.remove('active'), 2000);
   }
 
-  function addBeer() {
+  async function addBeer() {
     const name = document.getElementById('f-name').value.trim();
     if (!name) { alert('Navn er påkrevd.'); return; }
 
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Lagrer...';
+
     const beer = {
-      id: Date.now(),
       name,
-      brewery: document.getElementById('f-brewery').value.trim(),
-      type: document.getElementById('f-type').value.trim(),
-      abv: document.getElementById('f-abv').value,
-      country: document.getElementById('f-country').value.trim(),
+      brewery: document.getElementById('f-brewery').value.trim() || null,
+      type: document.getElementById('f-type').value.trim() || null,
+      abv: document.getElementById('f-abv').value ? parseFloat(document.getElementById('f-abv').value) : null,
+      country: document.getElementById('f-country').value.trim() || null,
       score: parseInt(document.getElementById('f-score').value),
-      review: document.getElementById('f-review').value.trim(),
-      image: document.getElementById('f-image').value.trim(),
+      review: document.getElementById('f-review').value.trim() || null,
+      image_url: uploadedImageUrl || null,
     };
 
-    const beers = getBeers();
-    beers.push(beer);
-    saveBeers(beers);
+    const { error } = await db.from('beers').insert([beer]);
 
-    // Reset form
-    ['f-name','f-brewery','f-type','f-abv','f-country','f-review','f-image'].forEach(id => {
+    btn.disabled = false;
+    btn.textContent = 'Legg til øl';
+
+    if (error) { alert('Feil ved lagring: ' + error.message); return; }
+
+    ['f-name','f-brewery','f-type','f-abv','f-country','f-review'].forEach(id => {
       document.getElementById(id).value = '';
     });
     document.getElementById('f-score').value = 7;
+    document.getElementById('file-input').value = '';
     updateScore();
     document.getElementById('img-preview').innerHTML = '🍺';
-
-    renderList();
+    uploadedImageUrl = null;
+    loadList();
     showToast();
   }
 
-  function deleteBeer(id) {
+  async function deleteBeer(id, imageUrl) {
     if (!confirm('Slett denne ølen?')) return;
-    const beers = getBeers().filter(b => b.id !== id);
-    saveBeers(beers);
-    renderList();
+    if (imageUrl) {
+      const path = imageUrl.split('/beer-images/')[1];
+      if (path) await db.storage.from('beer-images').remove([path]);
+    }
+    const { error } = await db.from('beers').delete().eq('id', id);
+    if (error) { alert('Feil ved sletting: ' + error.message); return; }
+    loadList();
   }
 
-  function renderList() {
-    const beers = getBeers().sort((a,b) => b.score - a.score);
+  async function loadList() {
+    const { data, error } = await db.from('beers').select('*').order('score', { ascending: false });
+    if (error) { console.error(error); return; }
+    const beers = data || [];
     document.getElementById('beer-count').textContent = beers.length;
     const list = document.getElementById('beer-list');
-
-    if (beers.length === 0) {
-      list.innerHTML = '<div class="empty-list">Ingen øl lagt til ennå.</div>';
-      return;
-    }
-
+    if (beers.length === 0) { list.innerHTML = '<div class="empty-list">Ingen øl lagt til ennå.</div>'; return; }
     list.innerHTML = beers.map(b => `
       <div class="beer-list-item">
-        <div class="beer-list-thumb">
-          ${b.image ? `<img src="${b.image}" alt="${b.name}" onerror="this.parentElement.innerHTML='🍺'" />` : '🍺'}
-        </div>
+        <div class="beer-list-thumb">${b.image_url ? `<img src="${b.image_url}" alt="${b.name}" onerror="this.parentElement.innerHTML='🍺'" />` : '🍺'}</div>
         <div class="beer-list-info">
           <div class="beer-list-name">${b.name}</div>
           <div class="beer-list-meta">${[b.brewery, b.type].filter(Boolean).join(' · ') || 'Ingen info'}</div>
         </div>
         <span class="score-pill">${b.score}/10</span>
-        <button class="btn-delete" onclick="deleteBeer(${b.id})" title="Slett">✕</button>
+        <button class="btn-delete" onclick="deleteBeer(${b.id}, ${b.image_url ? `'${b.image_url}'` : 'null'})" title="Slett">✕</button>
       </div>
     `).join('');
   }
@@ -592,7 +341,18 @@
     setTimeout(() => t.classList.remove('show'), 2500);
   }
 
+  const uploadArea = document.getElementById('upload-area');
+  uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+  uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+  uploadArea.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadArea.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) handleFileSelect({ target: { files: [file] } });
+  });
+
   updateScore();
+  init();
 </script>
 </body>
 </html>
