@@ -119,11 +119,8 @@
 </div>
 
 <script>
-  // ============================================================
-  // LEIM INN DINE SUPABASE-VERDIER HER:
-  const SUPABASE_URL = 'DIN_SUPABASE_URL';
-  const SUPABASE_ANON_KEY = 'DIN_SUPABASE_ANON_KEY';
-  // ============================================================
+  const SUPABASE_URL = 'https://dfbfghwtteqpbjuyypez.supabase.co/rest/v1/';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmYmZnaHd0dGVxcGJqdXl5cGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDU4MDMsImV4cCI6MjA5MzAyMTgwM30.Umk2yroHHeJrr3g2sJ_ksSKk6W9sqUXGs9v3dVpPZKA';
 
   const { createClient } = supabase;
   const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
