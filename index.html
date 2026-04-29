@@ -5,334 +5,101 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ølranking</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --gold: #C9A84C;
-      --gold-light: #F5E9C8;
-      --gold-dark: #8B6914;
-      --dark: #1A1208;
-      --dark2: #2D2010;
-      --mid: #6B4F20;
-      --cream: #FAF6EE;
-      --cream2: #F0E8D5;
-      --text: #2D2010;
-      --text-muted: #7A6040;
-      --border: rgba(201,168,76,0.25);
+      --gold: #C9A84C; --gold-light: #F5E9C8; --gold-dark: #8B6914;
+      --dark: #1A1208; --mid: #6B4F20;
+      --cream: #FAF6EE; --cream2: #F0E8D5;
+      --text: #2D2010; --text-muted: #7A6040;
+      --border: rgba(201,168,76,0.25); --border-solid: #e8d9b5;
       --radius: 12px;
     }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--cream);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* HEADER */
     header {
-      background: var(--dark);
-      padding: 1.5rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      background: var(--dark); padding: 1.5rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
       border-bottom: 2px solid var(--gold);
     }
+    header h1 { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 1.8rem; }
+    header h1 span { font-size: 0.85rem; color: rgba(201,168,76,0.6); font-family: 'DM Sans', sans-serif; font-weight: 300; display: block; letter-spacing: 0.1em; text-transform: uppercase; }
+    nav a { color: var(--gold-light); text-decoration: none; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 6px; transition: all 0.2s; }
+    nav a:hover { background: rgba(201,168,76,0.15); color: var(--gold); }
 
-    header h1 {
-      font-family: 'Playfair Display', serif;
-      color: var(--gold);
-      font-size: 1.8rem;
-      letter-spacing: 0.02em;
-    }
+    main { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem; }
 
-    header h1 span {
-      font-size: 1rem;
-      color: rgba(201,168,76,0.6);
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 300;
-      display: block;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    nav a {
-      color: var(--gold-light);
-      text-decoration: none;
-      font-size: 0.85rem;
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 0.5rem 1rem;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      transition: all 0.2s;
-    }
-
-    nav a:hover {
-      background: rgba(201,168,76,0.15);
-      color: var(--gold);
-    }
-
-    /* MAIN CONTENT */
-    main {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 2.5rem 2rem;
-    }
-
-    /* CONTROLS */
-    .controls {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 2rem;
-      flex-wrap: wrap;
-    }
-
-    .controls input, .controls select {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem;
-      padding: 0.6rem 1rem;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      background: white;
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
+    .controls { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+    .controls input, .controls select { font-family: 'DM Sans', sans-serif; font-size: 0.9rem; padding: 0.6rem 1rem; border: 1.5px solid var(--border-solid); border-radius: 8px; background: white; color: var(--text); outline: none; transition: border-color 0.2s; }
     .controls input { flex: 1; min-width: 200px; }
     .controls select { min-width: 180px; }
+    .controls input:focus, .controls select:focus { border-color: var(--gold); }
 
-    .controls input:focus, .controls select:focus {
-      border-color: var(--gold);
-    }
+    #beer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
 
-    /* BEER GRID */
-    #beer-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.5rem;
-    }
+    .beer-card { background: white; border: 1px solid var(--border-solid); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+    .beer-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(139,105,20,0.15); }
 
-    .beer-card {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
+    .beer-img { width: 100%; height: 200px; background: var(--cream2); display: flex; align-items: center; justify-content: center; font-size: 4rem; overflow: hidden; }
+    .beer-img img { width: 100%; height: 100%; object-fit: cover; }
 
-    .beer-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 40px rgba(139,105,20,0.15);
-    }
+    .beer-info { padding: 1rem 1.25rem; }
+    .beer-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; margin-bottom: 0.25rem; }
+    .beer-meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .beer-meta span { background: var(--cream2); padding: 2px 8px; border-radius: 20px; border: 1px solid var(--border); }
+    .beer-score { display: flex; align-items: center; gap: 0.5rem; }
+    .score-badge { background: var(--gold); color: var(--dark); font-weight: 700; font-size: 1.1rem; padding: 0.25rem 0.6rem; border-radius: 6px; font-family: 'Playfair Display', serif; }
+    .stars { color: var(--gold); font-size: 0.9rem; letter-spacing: 1px; }
 
-    .beer-img {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-      background: var(--cream2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 4rem;
-    }
-
-    .beer-img img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .beer-info {
-      padding: 1rem 1.25rem;
-    }
-
-    .beer-name {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.1rem;
-      margin-bottom: 0.25rem;
-    }
-
-    .beer-meta {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-bottom: 0.75rem;
-      display: flex;
-      gap: 0.75rem;
-    }
-
-    .beer-meta span {
-      background: var(--cream2);
-      padding: 2px 8px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-    }
-
-    .beer-score {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .score-badge {
-      background: var(--gold);
-      color: var(--dark);
-      font-weight: 700;
-      font-size: 1.1rem;
-      padding: 0.25rem 0.6rem;
-      border-radius: 6px;
-      font-family: 'Playfair Display', serif;
-    }
-
-    .stars {
-      color: var(--gold);
-      font-size: 0.9rem;
-      letter-spacing: 1px;
-    }
-
-    /* MODAL */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(26,18,8,0.8);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-    }
-
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,18,8,0.8); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
     .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 16px; max-width: 560px; width: 100%; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border-solid); }
+    .modal-header { background: var(--dark); padding: 1.5rem; border-radius: 16px 16px 0 0; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h2 { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 1.3rem; }
+    .modal-close { background: none; border: none; color: var(--gold-light); font-size: 1.5rem; cursor: pointer; }
+    .modal-img { width: 100%; height: 260px; background: var(--cream2); display: flex; align-items: center; justify-content: center; font-size: 5rem; overflow: hidden; }
+    .modal-img img { width: 100%; height: 100%; object-fit: cover; }
+    .modal-body { padding: 1.5rem; }
+    .modal-body .score-badge { font-size: 1.5rem; padding: 0.4rem 0.9rem; }
+    .modal-body p { margin-top: 1rem; line-height: 1.7; color: var(--text-muted); font-size: 0.95rem; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .tag { background: var(--cream2); border: 1px solid var(--border); color: var(--mid); font-size: 0.8rem; padding: 3px 10px; border-radius: 20px; }
 
-    .modal {
-      background: white;
-      border-radius: 16px;
-      max-width: 560px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      border: 1px solid var(--border);
-    }
+    .loading { text-align: center; padding: 4rem; color: var(--text-muted); }
+    .loading-spinner { font-size: 2.5rem; animation: spin 1s linear infinite; display: block; margin-bottom: 1rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .modal-header {
-      background: var(--dark);
-      padding: 1.5rem;
-      border-radius: 16px 16px 0 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .modal-header h2 {
-      font-family: 'Playfair Display', serif;
-      color: var(--gold);
-      font-size: 1.3rem;
-    }
-
-    .modal-close {
-      background: none;
-      border: none;
-      color: var(--gold-light);
-      font-size: 1.5rem;
-      cursor: pointer;
-      line-height: 1;
-    }
-
-    .modal-img {
-      width: 100%;
-      height: 240px;
-      object-fit: cover;
-      background: var(--cream2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 5rem;
-    }
-
-    .modal-img img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .modal-body {
-      padding: 1.5rem;
-    }
-
-    .modal-body .score-badge {
-      font-size: 1.5rem;
-      padding: 0.4rem 0.9rem;
-    }
-
-    .modal-body p {
-      margin-top: 1rem;
-      line-height: 1.7;
-      color: var(--text-muted);
-      font-size: 0.95rem;
-    }
-
-    .tag-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 0.75rem;
-    }
-
-    .tag {
-      background: var(--cream2);
-      border: 1px solid var(--border);
-      color: var(--mid);
-      font-size: 0.8rem;
-      padding: 3px 10px;
-      border-radius: 20px;
-    }
-
-    /* EMPTY STATE */
-    .empty {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: var(--text-muted);
-    }
-
+    .empty { text-align: center; padding: 4rem 2rem; color: var(--text-muted); grid-column: 1/-1; }
     .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
     .empty h3 { font-family: 'Playfair Display', serif; margin-bottom: 0.5rem; }
 
-    @media (max-width: 600px) {
-      header { flex-direction: column; gap: 1rem; text-align: center; }
-    }
+    @media (max-width: 600px) { header { flex-direction: column; gap: 1rem; text-align: center; } }
   </style>
 </head>
 <body>
 
 <header>
   <h1>🍺 Ølranking<span>Min personlige ølguide</span></h1>
-  <nav>
-    <a href="admin.html">Admin</a>
-  </nav>
+  <nav><a href="admin.html">Admin</a></nav>
 </header>
 
 <main>
   <div class="controls">
-    <input type="text" id="search" placeholder="Søk på øl, bryggeri eller type..." />
-    <select id="sort">
+    <input type="text" id="search" placeholder="Søk på øl, bryggeri eller type..." oninput="renderGrid()" />
+    <select id="sort" onchange="renderGrid()">
       <option value="score-desc">Høyeste score</option>
       <option value="score-asc">Laveste score</option>
       <option value="name-asc">Navn (A–Å)</option>
       <option value="newest">Nyeste først</option>
     </select>
-    <select id="filter-type">
+    <select id="filter-type" onchange="renderGrid()">
       <option value="">Alle typer</option>
     </select>
   </div>
-
-  <div id="beer-grid"></div>
+  <div id="beer-grid"><div class="loading"><span class="loading-spinner">🍺</span>Laster øl...</div></div>
 </main>
 
-<!-- Modal -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <div class="modal-header">
@@ -352,9 +119,31 @@
 </div>
 
 <script>
-  function getBeers() {
-    try { return JSON.parse(localStorage.getItem('beers') || '[]'); }
-    catch { return []; }
+  const SUPABASE_URL = 'https://dfbfghwtteqpbjuyypez.supabase.co/rest/v1/';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmYmZnaHd0dGVxcGJqdXl5cGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDU4MDMsImV4cCI6MjA5MzAyMTgwM30.Umk2yroHHeJrr3g2sJ_ksSKk6W9sqUXGs9v3dVpPZKA';
+
+  const { createClient } = supabase;
+  const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let allBeers = [];
+
+  async function loadBeers() {
+    const { data, error } = await db.from('beers').select('*').order('created_at', { ascending: false });
+    if (error) { console.error(error); return; }
+    allBeers = data || [];
+
+    const types = [...new Set(allBeers.map(b => b.type).filter(Boolean))];
+    const sel = document.getElementById('filter-type');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Alle typer</option>';
+    types.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t; o.textContent = t;
+      if (t === cur) o.selected = true;
+      sel.appendChild(o);
+    });
+
+    renderGrid();
   }
 
   function scoreToStars(s) {
@@ -364,24 +153,11 @@
   }
 
   function renderGrid() {
-    const beers = getBeers();
     const search = document.getElementById('search').value.toLowerCase();
     const sort = document.getElementById('sort').value;
     const filterType = document.getElementById('filter-type').value;
 
-    // Populate type filter
-    const types = [...new Set(beers.map(b => b.type).filter(Boolean))];
-    const typeSelect = document.getElementById('filter-type');
-    const currentVal = typeSelect.value;
-    typeSelect.innerHTML = '<option value="">Alle typer</option>';
-    types.forEach(t => {
-      const opt = document.createElement('option');
-      opt.value = t; opt.textContent = t;
-      if (t === currentVal) opt.selected = true;
-      typeSelect.appendChild(opt);
-    });
-
-    let filtered = beers.filter(b => {
+    let filtered = allBeers.filter(b => {
       const matchSearch = !search || b.name.toLowerCase().includes(search) ||
         (b.brewery||'').toLowerCase().includes(search) || (b.type||'').toLowerCase().includes(search);
       const matchType = !filterType || b.type === filterType;
@@ -391,20 +167,17 @@
     if (sort === 'score-desc') filtered.sort((a,b) => b.score - a.score);
     else if (sort === 'score-asc') filtered.sort((a,b) => a.score - b.score);
     else if (sort === 'name-asc') filtered.sort((a,b) => a.name.localeCompare(b.name));
-    else if (sort === 'newest') filtered.sort((a,b) => b.id - a.id);
+    else if (sort === 'newest') filtered.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
 
     const grid = document.getElementById('beer-grid');
-
     if (filtered.length === 0) {
-      grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🍺</div><h3>Ingen øl funnet</h3><p>Prøv et annet søk, eller legg til øl via admin-siden.</p></div>`;
+      grid.innerHTML = `<div class="empty"><div class="empty-icon">🍺</div><h3>Ingen øl funnet</h3><p>Prøv et annet søk.</p></div>`;
       return;
     }
 
     grid.innerHTML = filtered.map(b => `
-      <div class="beer-card" onclick='openModal(${JSON.stringify(b)})'>
-        <div class="beer-img">
-          ${b.image ? `<img src="${b.image}" alt="${b.name}" />` : '🍺'}
-        </div>
+      <div class="beer-card" onclick='openModal(${JSON.stringify(b).replace(/'/g, "&#39;")})'>
+        <div class="beer-img">${b.image_url ? `<img src="${b.image_url}" alt="${b.name}" />` : '🍺'}</div>
         <div class="beer-info">
           <div class="beer-name">${b.name}</div>
           <div class="beer-meta">
@@ -426,29 +199,16 @@
     document.getElementById('modal-score').textContent = b.score + '/10';
     document.getElementById('modal-stars').textContent = scoreToStars(b.score);
     document.getElementById('modal-review').textContent = b.review || 'Ingen anmeldelse skrevet ennå.';
-
-    const imgEl = document.getElementById('modal-img');
-    imgEl.innerHTML = b.image ? `<img src="${b.image}" alt="${b.name}" />` : '🍺';
-
+    document.getElementById('modal-img').innerHTML = b.image_url ? `<img src="${b.image_url}" alt="${b.name}" />` : '🍺';
     const tags = [b.brewery, b.type, b.abv ? b.abv + ' %' : null, b.country].filter(Boolean);
     document.getElementById('modal-tags').innerHTML = tags.map(t => `<span class="tag">${t}</span>`).join('');
-
     document.getElementById('modal').classList.add('open');
   }
 
-  function closeModal() {
-    document.getElementById('modal').classList.remove('open');
-  }
+  function closeModal() { document.getElementById('modal').classList.remove('open'); }
+  document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
 
-  document.getElementById('modal').addEventListener('click', e => {
-    if (e.target === document.getElementById('modal')) closeModal();
-  });
-
-  document.getElementById('search').addEventListener('input', renderGrid);
-  document.getElementById('sort').addEventListener('change', renderGrid);
-  document.getElementById('filter-type').addEventListener('change', renderGrid);
-
-  renderGrid();
+  loadBeers();
 </script>
 </body>
 </html>
