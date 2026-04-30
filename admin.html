@@ -3,11 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin – Ølranking</title>
+  <title>Admin – Ølrating</title>
+
+  <!-- Samme fonter som forsiden, og Supabase JS bibliotek for å kunne snakke med databasen -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  
+  <!-- Supabase biblioteket for å koble til database og fillagring -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <style>
+    /* Nullstiller nettleserens standardstiler */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Samme fargevariabler som forsiden for konsistent design */
     :root {
       --gold: #C9A84C; --gold-light: #F5E9C8; --gold-dark: #8B6914;
       --dark: #1A1208; --mid: #6B4F20;
@@ -18,103 +26,142 @@
     }
     body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
 
+    /* Header */
     header { background: var(--dark); padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--gold); }
     header h1 { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 1.6rem; }
     header h1 span { font-size: 0.8rem; color: rgba(201,168,76,0.6); font-family: 'DM Sans', sans-serif; font-weight: 300; display: block; letter-spacing: 0.1em; text-transform: uppercase; }
     .header-nav { display: flex; align-items: center; gap: 1rem; }
     .header-nav a { color: var(--gold-light); text-decoration: none; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 6px; transition: all 0.2s; }
     .header-nav a:hover { background: rgba(201,168,76,0.15); }
+    /* Logg ut knappen; rød og skjult som standard (vises etter innlogging) */
     #logout-btn { background: rgba(192,57,43,0.2); border: 1px solid rgba(192,57,43,0.4); color: #f09c94; font-size: 0.85rem; font-weight: 500; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-family: 'DM Sans', sans-serif; display: none; }
     #logout-btn:hover { background: rgba(192,57,43,0.35); }
 
     main { max-width: 1000px; margin: 0 auto; padding: 2.5rem 2rem; }
 
+    /* Innloggingsskjermen */
     #login-screen { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
     .login-box { background: white; border: 1px solid var(--border-solid); border-radius: 16px; padding: 2.5rem; width: 100%; max-width: 380px; text-align: center; }
     .login-box h2 { font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.5rem; }
     .login-box p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
     .login-box input { width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-solid); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 1rem; outline: none; color: var(--text); margin-bottom: 0.75rem; transition: border-color 0.2s; }
     .login-box input:focus { border-color: var(--gold); }
+    /* Primærknappen for innlogging */
     .btn-primary { background: var(--gold); color: var(--dark); font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.9rem; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; width: 100%; transition: background 0.2s; }
     .btn-primary:hover { background: #d4b050; }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    /* Feilmelding for innlogging */
     .login-error { color: var(--danger); font-size: 0.85rem; margin-top: 0.75rem; display: none; }
 
+    /* Adminpanel, skjult til man er logget inn */
     #admin-panel { display: none; }
+    /* To kolonner side om side: skjema til venstre, liste til høyre */
     .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    /* På mobil: en kolonne */
     @media (max-width: 700px) { .panel-grid { grid-template-columns: 1fr; } }
 
+    /* Hvite kort bokser for både skjema og liste, med litt padding og avrundede kanter */
     .card { background: white; border: 1px solid var(--border-solid); border-radius: var(--radius); padding: 1.5rem; }
     .card h2 { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-solid); }
 
+    /* Skjemaet for å legge til ny øl */
     .form-group { margin-bottom: 1rem; }
+    /* Liten grå etikett over hvert felt */
     .form-group label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.35rem; }
     .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.6rem 0.9rem; border: 1.5px solid var(--border-solid); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--text); background: white; outline: none; transition: border-color 0.2s; }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--gold); }
     .form-group textarea { min-height: 90px; resize: vertical; }
 
+    /* Score slider og forhåndsvisning */
     .score-preview { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.5rem; }
     .score-num { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--gold-dark); font-weight: 700; min-width: 40px; }
     .stars-preview { color: var(--gold); letter-spacing: 2px; }
     input[type="range"] { accent-color: var(--gold); }
 
+    /* 
+    Området for å laste opp bilde 
+    Stiplet boks man kan klikke på eller dra bilder til
+    */
     .upload-area { border: 2px dashed var(--border-solid); border-radius: 8px; padding: 1.25rem; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; background: var(--cream2); margin-bottom: 0.5rem; }
+    /* Markering når man holder et bildet over området */
     .upload-area:hover, .upload-area.drag-over { border-color: var(--gold); background: var(--gold-light); }
+    /* Den faktiske fil input er usynlig, vi bruker den egne opplastings boksen over */
     .upload-area input[type="file"] { display: none; }
     .upload-area p { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; }
 
+    /* Forhåndsvisning av valgt bilde */
     .img-preview { width: 100%; height: 140px; border-radius: 8px; border: 1px solid var(--border-solid); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 0.75rem; overflow: hidden; background: var(--cream2); }
     .img-preview img { width: 100%; height: 100%; object-fit: cover; }
 
+    /* Status melding under opplasting ("Laster opp..." / "Bildet lastet opp!") */
     .upload-progress { display: none; background: var(--cream2); border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
-    .upload-progress.active { display: block; }
+    .upload-progress.active { display: block; } /* Vises når klassen "active" legges til */
 
+    /* Legg til knappen */
     .btn-submit { background: var(--gold); color: var(--dark); font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.9rem; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; width: 100%; letter-spacing: 0.05em; margin-top: 0.5rem; transition: background 0.2s; }
     .btn-submit:hover { background: #d4b050; }
     .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    /* Øllisten til høyre */
     .beer-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    /* En rad per øl i listen */
     .beer-list-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid var(--border-solid); border-radius: 8px; background: var(--cream); }
+    /* Lite miniatyrbilde til venstre i raden */
     .beer-list-thumb { width: 44px; height: 44px; border-radius: 6px; background: var(--cream2); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; overflow: hidden; }
     .beer-list-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    /* Navn og info i midten av raden */
     .beer-list-info { flex: 1; min-width: 0; }
     .beer-list-name { font-weight: 500; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .beer-list-meta { font-size: 0.75rem; color: var(--text-muted); }
+    /* Gul score til høyre */
     .score-pill { background: var(--gold); color: var(--dark); font-weight: 700; font-size: 0.85rem; padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+    /* Rød X knapp for å slette */
     .btn-delete { background: none; border: 1px solid rgba(192,57,43,0.3); color: var(--danger); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 0.85rem; flex-shrink: 0; transition: background 0.2s; }
     .btn-delete:hover { background: rgba(192,57,43,0.1); }
     .empty-list { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.9rem; }
     .loading-list { text-align: center; padding: 2rem; color: var(--text-muted); }
 
+    /* 
+    Toast melding; grønn bekreftelse neders på siden
+    Plassert utenfor skjermen som standard, skyves inn med animasjon
+    */
     .success-toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--dark); color: var(--gold); padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; border: 1px solid var(--gold); transition: transform 0.3s; z-index: 200; }
+    /* Skyves opp på skjermen når klassen "show" legges til */
     .success-toast.show { transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
 
+<!-- Header -->
 <header>
-  <h1>🍺 Ølranking<span>Admin</span></h1>
+  <h1>🍺 Ølrating<span>Admin</span></h1>
   <div class="header-nav">
-    <a href="index.html">← Se rankinglisten</a>
+    <a href="index.html">← Se ratinglisten</a>
+    <!-- Logg ut knappen er skjult og vises først etter innlogging -->
     <button id="logout-btn" onclick="logout()">Logg ut</button>
   </div>
 </header>
 
 <main>
+  <!--Innloggingsskjerm, vises til bruker logger inn -->
   <div id="login-screen">
     <div class="login-box">
       <div style="font-size:3rem;margin-bottom:1rem;">🔒</div>
       <h2>Admin-innlogging</h2>
+      <!-- Enter tasten starter innlogging-->
       <p>Logg inn med e-post og passord.</p>
       <input type="email" id="login-email" placeholder="E-post" onkeydown="if(event.key==='Enter')tryLogin()" />
       <input type="password" id="login-password" placeholder="Passord" onkeydown="if(event.key==='Enter')tryLogin()" />
       <button class="btn-primary" id="login-btn" onclick="tryLogin()">Logg inn</button>
+      <!-- Feilmelding skjult som standard-->
       <div class="login-error" id="login-error">Feil e-post eller passord.</div>
     </div>
   </div>
 
+  <!-- Admin panel, skjult innlogging -->
   <div id="admin-panel">
     <div class="panel-grid">
+      <!-- Venstre kolonne: Skjema for å legge til ny øl -->
       <div class="card">
         <h2>Legg til ny øl</h2>
         <div class="form-group">
@@ -125,6 +172,7 @@
           <label>Bryggeri</label>
           <input type="text" id="f-brewery" placeholder="f.eks. Nøgne Ø" />
         </div>
+        <!-- To felt side om side -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
           <div class="form-group">
             <label>Type</label>
@@ -135,10 +183,13 @@
             <input type="number" id="f-abv" placeholder="5.5" step="0.1" min="0" max="100" />
           </div>
         </div>
+
         <div class="form-group">
           <label>Land</label>
           <input type="text" id="f-country" placeholder="f.eks. Norge" />
         </div>
+
+        <!-- Score slider, kaller updateScore() når man drar den -->
         <div class="form-group">
           <label>Score: <span id="score-display">7</span>/10</label>
           <input type="range" id="f-score" min="1" max="10" value="7" step="1" oninput="updateScore()" />
@@ -147,23 +198,31 @@
             <span class="stars-preview" id="score-stars">★★★½☆</span>
           </div>
         </div>
+
         <div class="form-group">
           <label>Anmeldelse</label>
           <textarea id="f-review" placeholder="Skriv dine tanker om ølen..."></textarea>
         </div>
+        
+        <!-- Bildeopplastning -->
         <div class="form-group">
           <label>Bilde</label>
+          <!-- Bilde forhåndsvisning, viser 🍺 hvis ingen bilder er valgt -->
           <div class="img-preview" id="img-preview">🍺</div>
+          <!-- Klikk området; åpner fil velger. støtter også drag and drop via JavaScript -->
           <div class="upload-area" onclick="document.getElementById('file-input').click()" id="upload-area">
+            <!-- Selve fil inputen er usynlig -->
             <input type="file" id="file-input" accept="image/*" onchange="handleFileSelect(event)" />
             <div style="font-size:1.5rem">📷</div>
             <p>Klikk for å velge bilde fra PC</p>
           </div>
+          <!-- Status under opplasting-->
           <div class="upload-progress" id="upload-progress">⏳ Laster opp bilde...</div>
         </div>
         <button class="btn-submit" id="submit-btn" onclick="addBeer()">Legg til øl</button>
       </div>
 
+      <!-- Høyre kolonne; liste over alle øl i databasen -->
       <div class="card">
         <h2>Alle øl (<span id="beer-count">0</span>)</h2>
         <div id="beer-list"><div class="loading-list">Laster...</div></div>
@@ -172,43 +231,62 @@
   </div>
 </main>
 
+<!-- Toast melding som dukker opp nederst etter vellykket lagring -->
 <div class="success-toast" id="toast">✓ Øl lagt til!</div>
 
+<!-- JavaScript -->
 <script>
+
+  /* 
+  Supabase tilkobling, samme som forsiden
+  */
   const SUPABASE_URL = 'https://dfbfghwtteqpbjuyypez.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmYmZnaHd0dGVxcGJqdXl5cGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDU4MDMsImV4cCI6MjA5MzAyMTgwM30.Umk2yroHHeJrr3g2sJ_ksSKk6W9sqUXGs9v3dVpPZKA';
 
   const { createClient } = supabase;
   const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  /*
+  Midlertidig lagring av bilde URL etter opplasting til Supabase Storage
+  Brukes når ølen til slutt lagres i databasen
+  */
   let uploadedImageUrl = null;
 
+  /*
+  Kjøres automatisk når siden lastes. Supabase husker innloggingen
+  i nettleseren, så man slipper å logge inn på nytt etter sideopplasting.
+  */
   async function init() {
     const { data: { session } } = await db.auth.getSession();
     if (session) showAdmin();
   }
 
+  // Innlogging via Supabase Auth
   async function tryLogin() {
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
     const btn = document.getElementById('login-btn');
     const errEl = document.getElementById('login-error');
 
+    // Skjul eventuell gammel feilmelding og deaktiver knappen mens vi venter
     errEl.style.display = 'none';
     btn.disabled = true;
     btn.textContent = 'Logger inn...';
 
+    // Supabase sjekker e-post og passord mot brukerne du har opprettet i Supabase Auth
     const { error } = await db.auth.signInWithPassword({ email, password });
 
     btn.disabled = false;
     btn.textContent = 'Logg inn';
 
-    if (error) { errEl.style.display = 'block'; return; }
-    showAdmin();
+    if (error) { errEl.style.display = 'block'; return; } // Feil passord -> vis feilmelding
+    showAdmin(); // Riktig passord -> vis admin panelet
   }
 
+  // Logg ut
   async function logout() {
-    await db.auth.signOut();
+    await db.auth.signOut(); // Avslutter sesjonen i Supabase
+    // Skjul admin panelet og vis innloggingsskjermen igjen
     document.getElementById('admin-panel').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('logout-btn').style.display = 'none';
@@ -216,75 +294,93 @@
     document.getElementById('login-password').value = '';
   }
 
+  // Vis admin panelet etter innlogging
   function showAdmin() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('admin-panel').style.display = 'block';
     document.getElementById('logout-btn').style.display = 'inline-block';
-    loadList();
+    loadList(); // Hent og vis øllisten
   }
 
+  // Konverterer score til stjerner (samme som forsiden)
   function scoreToStars(s) {
     const full = Math.floor(s / 2);
     const half = (s % 2) >= 1 ? 1 : 0;
     return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - half);
   }
 
+  // Oppdater score visning når slider flyttes.
   function updateScore() {
     const s = document.getElementById('f-score').value;
-    document.getElementById('score-display').textContent = s;
-    document.getElementById('score-num').textContent = s;
-    document.getElementById('score-stars').textContent = scoreToStars(parseInt(s));
+    document.getElementById('score-display').textContent = s; // Oppdater tallet i label
+    document.getElementById('score-num').textContent = s; // Oppdater stort tall
+    document.getElementById('score-stars').textContent = scoreToStars(parseInt(s)); // oppdater stjerner
   }
 
+  // Håndterer bildevalg og opplastin til Supabase storage
   async function handleFileSelect(event) {
-    const file = event.target.files[0];
+    const file = event.target.files[0]; // Hent den valgte filen
     if (!file) return;
 
+    // Vis forhåndsvisning lokalt med en gang (før opplasting er ferdig)
     const reader = new FileReader();
     reader.onload = e => {
       document.getElementById('img-preview').innerHTML = `<img src="${e.target.result}" alt="Preview" />`;
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(file); // Konverterer bildet til en data URL for forhåndsvisning
 
+    // Vis fremgangsstatus og lås legg til knapp
     const progressEl = document.getElementById('upload-progress');
     progressEl.textContent = '⏳ Laster opp bilde...';
     progressEl.classList.add('active');
     document.getElementById('submit-btn').disabled = true;
 
+    // Lag et unikt filnavn basert på tidsstempel (f.eks. "1714000000000.jpg")
+    // Dette forhindrer at to bilder overskriver hverandre
     const ext = file.name.split('.').pop();
     const fileName = `${Date.now()}.${ext}`;
 
-    const { error } = await db.storage.from('beer-images').upload(fileName, file, { cacheControl: '3600', upsert: false });
+    // Last opp bildet til Supabase Storage (bøtta "beer-image")
+    const { error } = await db.storage.from('beer-images').upload(fileName, file, { 
+      cacheControl: '3600', // Nettleseren kan cache bildet i 1 time
+       upsert: false // ikke iverskriver hvis filen finnes fra før
+      });
 
     document.getElementById('submit-btn').disabled = false;
 
     if (error) { progressEl.textContent = '✗ Opplasting feilet: ' + error.message; return; }
 
+    // hent den offentlige URLen til det opplastedet bildet
+    // Denne URLen lagres i databasen og brukes av forsiden for å vise bildet
     const { data: urlData } = db.storage.from('beer-images').getPublicUrl(fileName);
     uploadedImageUrl = urlData.publicUrl;
     progressEl.textContent = '✓ Bilde lastet opp!';
-    setTimeout(() => progressEl.classList.remove('active'), 2000);
+    setTimeout(() => progressEl.classList.remove('active'), 2000); // Skjul meldingen etter 2 sekunder
   }
 
+  // Lagrer ny øl i Supabase databasen
   async function addBeer() {
     const name = document.getElementById('f-name').value.trim();
-    if (!name) { alert('Navn er påkrevd.'); return; }
+    if (!name) { alert('Navn er påkrevd.'); return; } // Stopp hvisnavn mangler
 
     const btn = document.getElementById('submit-btn');
     btn.disabled = true;
     btn.textContent = 'Lagrer...';
 
+    //Bygg et objekt med all øldata fra skjemaet
+    // "|| null" betyr; lagre null idatabasen hvis feltet er tomt
     const beer = {
       name,
       brewery: document.getElementById('f-brewery').value.trim() || null,
       type: document.getElementById('f-type').value.trim() || null,
       abv: document.getElementById('f-abv').value ? parseFloat(document.getElementById('f-abv').value) : null,
       country: document.getElementById('f-country').value.trim() || null,
-      score: parseInt(document.getElementById('f-score').value),
+      score: parseInt(document.getElementById('f-score').value), // Konverter til heltall
       review: document.getElementById('f-review').value.trim() || null,
-      image_url: uploadedImageUrl || null,
+      image_url: uploadedImageUrl || null, // URLen fra Supabase Storage (satt i handleFileSelect)
     };
 
+    // Sett inn en ny rad i "beers" tabellen i Supabase
     const { error } = await db.from('beers').insert([beer]);
 
     btn.disabled = false;
@@ -292,41 +388,58 @@
 
     if (error) { alert('Feil ved lagring: ' + error.message); return; }
 
+    // Tøm alle skjemafelt etter vellykket lagring
     ['f-name','f-brewery','f-type','f-abv','f-country','f-review'].forEach(id => {
       document.getElementById(id).value = '';
     });
     document.getElementById('f-score').value = 7;
-    document.getElementById('file-input').value = '';
+    document.getElementById('file-input').value = ''; // Nullstill fil input
     updateScore();
-    document.getElementById('img-preview').innerHTML = '🍺';
-    uploadedImageUrl = null;
-    loadList();
-    showToast();
+    document.getElementById('img-preview').innerHTML = '🍺'; // Tilbakestill forhåndsvisning
+    uploadedImageUrl = null; // Nullstill den lagrede bilde URLen
+
+    loadList(); // Oppdater øllisten til høyre
+    showToast(); // Vis bekreftelsesmelding
   }
 
+  // Sletter en øl fra databasen, og bildet fra Storage
   async function deleteBeer(id, imageUrl) {
-    if (!confirm('Slett denne ølen?')) return;
+    if (!confirm('Slett denne ølen?')) return; // Bekreftelses dialog
+
+    // Slett bildet fra Supabase Storage hvis det finnes
     if (imageUrl) {
+      // Hent filnavnet fra URLen, det som er etter "/beer-images"
       const path = imageUrl.split('/beer-images/')[1];
       if (path) await db.storage.from('beer-images').remove([path]);
     }
+
+    // Slett raden fra "beers tabellen der id kolonner matcher"
     const { error } = await db.from('beers').delete().eq('id', id);
     if (error) { alert('Feil ved sletting: ' + error.message); return; }
-    loadList();
+    
+    loadList(); // Oppdater listen etter sletting
   }
 
+  // Henter og viser øllisten til høyre
   async function loadList() {
+    // hent alle øl sortert etter score (høyest først)
     const { data, error } = await db.from('beers').select('*').order('score', { ascending: false });
     if (error) { console.error(error); return; }
+
     const beers = data || [];
-    document.getElementById('beer-count').textContent = beers.length;
+    document.getElementById('beer-count').textContent = beers.length; // Oppdater antallet i overskriften
+
     const list = document.getElementById('beer-list');
     if (beers.length === 0) { list.innerHTML = '<div class="empty-list">Ingen øl lagt til ennå.</div>'; return; }
+    
+    // Generer en rad per øl i listen
     list.innerHTML = beers.map(b => `
       <div class="beer-list-item">
+        <!-- Forhåndsvisning av bilde eller 🍺 -->
         <div class="beer-list-thumb">${b.image_url ? `<img src="${b.image_url}" alt="${b.name}" onerror="this.parentElement.innerHTML='🍺'" />` : '🍺'}</div>
         <div class="beer-list-info">
           <div class="beer-list-name">${b.name}</div>
+          <!-- Vis bryggeri og type, eller "Ingen info" hvis begge mangler -->
           <div class="beer-list-meta">${[b.brewery, b.type].filter(Boolean).join(' · ') || 'Ingen info'}</div>
         </div>
         <span class="score-pill">${b.score}/10</span>
@@ -335,24 +448,31 @@
     `).join('');
   }
 
+  // Vis bekreftelsesmelding nederst på siden
   function showToast() {
     const t = document.getElementById('toast');
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
+    t.classList.add('show'); // Skyv inn meldingen
+    setTimeout(() => t.classList.remove('show'), 2500); // Skjul den igjen etter 2,5 sek
   }
 
+  // Drag and drop for bilder
   const uploadArea = document.getElementById('upload-area');
+  // Når et bilde dras over opplastingsområdet: marker det
   uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+  // Når bildet dras ut igjen: fjern markering
   uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+  // Når bildet slippes: start opplasting
   uploadArea.addEventListener('drop', e => {
     e.preventDefault();
     uploadArea.classList.remove('drag-over');
     const file = e.dataTransfer.files[0];
+    // Sjekk at det er en bildefil (ikke f.eks. en PDF)
     if (file && file.type.startsWith('image/')) handleFileSelect({ target: { files: [file] } });
   });
 
-  updateScore();
-  init();
+  // Oppstart
+  updateScore(); // Sett riktige stjerner for standard score (7)
+  init(); // Sjekk om bruker allerede er logget inn
 </script>
 </body>
 </html>
