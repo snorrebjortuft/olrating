@@ -192,7 +192,7 @@
         <!-- Score slider, kaller updateScore() når man drar den -->
         <div class="form-group">
           <label>Score: <span id="score-display">7</span>/10</label>
-          <input type="range" id="f-score" min="1" max="10" value="7" step="1" oninput="updateScore()" />
+          <input type="range" id="f-score" min="1" max="10" value="7" step="0.1" oninput="updateScore()" />
           <div class="score-preview">
             <span class="score-num" id="score-num">7</span>
             <span class="stars-preview" id="score-stars">★★★½☆</span>
@@ -305,16 +305,16 @@
   // Konverterer score til stjerner (samme som forsiden)
   function scoreToStars(s) {
     const full = Math.floor(s / 2);
-    const half = (s % 2) >= 1 ? 1 : 0;
+    const half = (s % 2) >= 0.5 ? 1 : 0;
     return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - half);
   }
 
   // Oppdater score visning når slider flyttes.
   function updateScore() {
     const s = document.getElementById('f-score').value;
-    document.getElementById('score-display').textContent = s; // Oppdater tallet i label
-    document.getElementById('score-num').textContent = s; // Oppdater stort tall
-    document.getElementById('score-stars').textContent = scoreToStars(parseInt(s)); // oppdater stjerner
+    document.getElementById('score-display').textContent = parseFloat(s).toFixed(1); // Oppdater tallet i label
+    document.getElementById('score-num').textContent = parseFloat(s).toFixed(1); // Oppdater stort tall
+    document.getElementById('score-stars').textContent = scoreToStars(parseFloat(s)); // oppdater stjerner
   }
 
   // Håndterer bildevalg og opplastin til Supabase storage

@@ -239,12 +239,12 @@
   }
 
   /* Konverterer tallscore til stjerner
-  En score på 8.5 blir for eksempel "★★★★½☆"
+  En score på 8.3 blir for eksempel "★★★★½☆"
   */
 
   function scoreToStars(s) {
     const full = Math.floor(s / 2);
-    const half = (s % 2) >= 1 ? 1 : 0;
+    const half = (s % 2) >= 0.5 ? 1 : 0;
     return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - half);
   }
 
