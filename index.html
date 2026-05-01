@@ -134,20 +134,20 @@
 </head>
 <body>
 
-/* Headeren med logo og navigasjon */
+<!-- Headeren med logo og navigasjon -->
 <header>
   <h1>🍺 Ølrating<span>Fasit ølguide</span></h1>
-  /* Navigasjonslenke til admin siden hvor man kan legge til og redigere øl i databasen */
+  <!-- Navigasjonslenke til admin siden hvor man kan legge til og redigere øl i databasen -->
   <nav><a href="admin.html">Admin</a></nav>
 </header>
 
-/* Hovedinnholdet med søk, filter og grid av øl */
+<!-- Hovedinnholdet med søk, filter og grid av øl -->
 <main>
   <div class="controls">
-    /* Søkefelt kaller renderGrid() hver gang brukeren skriver noe for å oppdatere visningen */
+    <!-- Søkefelt kaller renderGrid() hver gang brukeren skriver noe for å oppdatere visningen -->
     <input type="text" id="search" placeholder="Søk på øl, bryggeri eller type..." oninput="renderGrid()" />
     
-    /* Nedtrekksmeny for sortering. Kaller renderGrid() når brukeren velger en sortering for å oppdatere visningen */
+    <!-- Nedtrekksmeny for sortering. Kaller renderGrid() når brukeren velger en sortering for å oppdatere visningen -->
     <select id="sort" onchange="renderGrid()">
       <option value="score-desc">Høyeste score</option>
       <option value="score-asc">Laveste score</option>
@@ -155,41 +155,41 @@
       <option value="newest">Nyeste først</option>
     </select>
 
-    /* Neddtrekksmeny for å filtrere på øltype. Fylles dynamisk med alle typer som finnes i databasen når siden lastes */
+    <!-- Nedtrekksmeny for å filtrere på øltype. Fylles dynamisk med alle typer som finnes i databasen når siden lastes -->
     <select id="filter-type" onchange="renderGrid()">
       <option value="">Alle typer</option>
     </select>
   </div>
 
-  /* Kortene med øl havner her. Starter med en laste melding */
+  <!-- Kortene med øl havner her. Starter med en laste melding -->
   <div id="beer-grid"><div class="loading"><span class="loading-spinner">🍺</span>Laster øl...</div></div>
 </main>
 
 
-/* Popup, skjult som standard, vises når man klikker på et ølkort */
+<!-- Popup, skjult som standard, vises når man klikker på et ølkort -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <div class="modal-header">
-      /* Ølnavnet fylles inn av JavaScript når popupen åpnes */
+      <!-- Ølnavnet fylles inn av JavaScript når popupen åpnes -->
       <h2 id="modal-name"></h2>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-    /* Bildet fylles inn av JavaScript */
+    <!-- Bildet fylles inn av JavaScript -->
     <div class="modal-img" id="modal-img"></div>
     <div class="modal-body">
       <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
         <span class="score-badge" id="modal-score"></span>
         <span class="stars" id="modal-stars"></span>
       </div>
-      /* Info som bryggeri, type, ABV og land fylles inn som "tags" av JavaScript */
+      <!-- Info som bryggeri, type, ABV og land fylles inn som "tags" av JavaScript -->
       <div class="tag-row" id="modal-tags"></div>
-      /* Anmeldelsensteksten
+      <!-- Anmeldelsensteksten -->
       <p id="modal-review"></p>
     </div>
   </div>
 </div>
 
-// JavaScript kode som snakker med Supabase for å hente øldata og oppdatere siden dynamisk
+<!-- JavaScript kode som snakker med Supabase for å hente øldata og oppdatere siden dynamisk -->
 <script>
 
   /* Tilkoblingsinfo.
@@ -239,12 +239,12 @@
   }
 
   /* Konverterer tallscore til stjerner
-  En score på 8.5 blir for eksempel "★★★★½☆"
+  En score på 8.3 blir for eksempel "★★★★½☆"
   */
 
   function scoreToStars(s) {
     const full = Math.floor(s / 2);
-    const half = (s % 2) >= 1 ? 1 : 0;
+    const half = (s % 2) >= 0.5 ? 1 : 0;
     return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - half);
   }
 
