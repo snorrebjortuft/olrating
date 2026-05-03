@@ -325,8 +325,12 @@
     // Vis forhåndsvisning lokalt med en gang (før opplasting er ferdig)
     const reader = new FileReader();
     reader.onload = e => {
-      document.getElementById('img-preview').innerHTML = `<img src="${e.target.result}" alt="Preview" />`;
-    };
+      document.getElementById('img-preview').innerHTML = `
+        <img src="${e.target.result}" alt="Preview" />
+        <button onclick="removeImage()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:1rem;">✕</button>
+      `;
+    document.getElementById('img-preview').style.position = 'relative';
+};
     reader.readAsDataURL(file); // Konverterer bildet til en data URL for forhåndsvisning
 
     // Vis fremgangsstatus og lås legg til knapp
@@ -356,6 +360,13 @@
     uploadedImageUrl = urlData.publicUrl;
     progressEl.textContent = '✓ Bilde lastet opp!';
     setTimeout(() => progressEl.classList.remove('active'), 2000); // Skjul meldingen etter 2 sekunder
+  }
+
+  function removeImage() {
+    uploadedImageUrl = null;
+    document.getElementById('img-preview').innerHTML = '🍺';
+    document.getElementById('img-preview').style.position = '';
+    document.getElementById('file-input').value = '';
   }
 
   // Lagrer ny øl i Supabase databasen
