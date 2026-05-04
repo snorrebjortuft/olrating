@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <!-- Gjør at siden ser bra ut på telefon -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ølranking</title>
+  <title>Ølrating</title>
 
   <!-- Laster inn to fonter fra Google: Playfair Display (overskrifter) og DM Sans (brødtekst) -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -293,7 +293,7 @@
             ${b.abv ? `<span>${b.abv}%</span>` : ''}
           </div>
           <div class="beer-score">
-            <span class="score-badge">${b.score}/10</span>
+            <span class="score-badge">${parseFloat(b.score).toFixed(1)}/10</span>
             <span class="stars">${scoreToStars(b.score)}</span>
           </div>
         </div>
@@ -306,7 +306,7 @@
   function openModal(b) {
     // Fyll inn alle felt i popupen med data fra det klikkede ølkortet
     document.getElementById('modal-name').textContent = b.name;
-    document.getElementById('modal-score').textContent = b.score + '/10';
+    document.getElementById('modal-score').textContent = parseFloat(b.score).toFixed(1) + '/10';
     document.getElementById('modal-stars').textContent = scoreToStars(b.score);
     document.getElementById('modal-review').textContent = b.review || 'Ingen anmeldelse skrevet ennå.';
     document.getElementById('modal-img').innerHTML = b.image_url ? `<img src="${b.image_url}" alt="${b.name}" />` : '🍺';

@@ -118,6 +118,12 @@
     /* Rød X knapp for å slette */
     .btn-delete { background: none; border: 1px solid rgba(192,57,43,0.3); color: var(--danger); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 0.85rem; flex-shrink: 0; transition: background 0.2s; }
     .btn-delete:hover { background: rgba(192,57,43,0.1); }
+    .btn-edit {background: none; border: 1px solid rgba(201, 168, 74, 0.4); color: var(--gold-dark); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 0.85rem; flex-shrink: 0; transition: background 0.2s; }
+    .btn-edit:hover { background: rgba(201, 168, 76, 0.15); }
+    .btn-cancel { background: none; border: 1px solid var (--border-solid); color: var(--text-muted); font-family: 'DM Sans', sans-serif;  font-size: 0.9rem; padding: 0.75rem; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 0.5rem; }
+    .btn-cancel:hover { background: var(--cream2); }
+    .card.editing {border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
+    .remove-img-btn { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 1rem; }
     .empty-list { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.9rem; }
     .loading-list { text-align: center; padding: 2rem; color: var(--text-muted); }
 
@@ -162,8 +168,8 @@
   <div id="admin-panel">
     <div class="panel-grid">
       <!-- Venstre kolonne: Skjema for å legge til ny øl -->
-      <div class="card">
-        <h2>Legg til ny øl</h2>
+      <div class="card" id="form-card">
+        <h2 id="form-title">Legg til ny øl</h2>
         <div class="form-group">
           <label>Navn *</label>
           <input type="text" id="f-name" placeholder="f.eks. Nøgne Ø Imperial Stout" />
@@ -208,7 +214,7 @@
         <div class="form-group">
           <label>Bilde</label>
           <!-- Bilde forhåndsvisning, viser 🍺 hvis ingen bilder er valgt -->
-          <div class="img-preview" id="img-preview">🍺</div>
+          <div class="img-preview" id="img-preview" style="position:relative">🍺</div>
           <!-- Klikk området; åpner fil velger. støtter også drag and drop via JavaScript -->
           <div class="upload-area" onclick="document.getElementById('file-input').click()" id="upload-area">
             <!-- Selve fil inputen er usynlig -->
@@ -219,7 +225,9 @@
           <!-- Status under opplasting-->
           <div class="upload-progress" id="upload-progress">⏳ Laster opp bilde...</div>
         </div>
-        <button class="btn-submit" id="submit-btn" onclick="addBeer()">Legg til øl</button>
+        <button class="btn-submit" id="submit-btn" onclick="saveBeer()">Legg til øl</button>
+        <!-- Vises kun under redigering -->
+        <button class="btn-cancel" id="cancel-btn" onclick="cancelEdit()" style="display:none">Avbryt redigering</button>
       </div>
 
       <!-- Høyre kolonne; liste over alle øl i databasen -->
@@ -251,6 +259,10 @@
   Brukes når ølen til slutt lagres i databasen
   */
   let uploadedImageUrl = null;
+
+
+  /* Midlertidig lagring av ølet under redigering */
+  let editingBeerId = null;
 
   /*
   Kjøres automatisk når siden lastes. Supabase husker innloggingen
@@ -370,47 +382,125 @@
   }
 
   // Lagrer ny øl i Supabase databasen
-  async function addBeer() {
+  async function saveBeer() {
+    // Hent navnet fra skjema og stopp hvis det er tomt.
     const name = document.getElementById('f-name').value.trim();
-    if (!name) { alert('Navn er påkrevd.'); return; } // Stopp hvisnavn mangler
+    if (!name) { alert('Navn er påkrevd.'); return; }
 
+    // Deaktiver knappen mens vi venter på svar fra Supabase.
     const btn = document.getElementById('submit-btn');
     btn.disabled = true;
     btn.textContent = 'Lagrer...';
 
-    //Bygg et objekt med all øldata fra skjemaet
-    // "|| null" betyr; lagre null idatabasen hvis feltet er tomt
+    // Bygg et objekt med all øldata fra skjemaet.
+    // "|| null" betyr: lagre null i databasen hvis feltet er tomt.
     const beer = {
       name,
       brewery: document.getElementById('f-brewery').value.trim() || null,
       type: document.getElementById('f-type').value.trim() || null,
       abv: document.getElementById('f-abv').value ? parseFloat(document.getElementById('f-abv').value) : null,
       country: document.getElementById('f-country').value.trim() || null,
-      score: parseInt(document.getElementById('f-score').value), // Konverter til heltall
+      score: parseFloat(document.getElementById('f-score').value),
       review: document.getElementById('f-review').value.trim() || null,
-      image_url: uploadedImageUrl || null, // URLen fra Supabase Storage (satt i handleFileSelect)
+      image_url: uploadedImageUrl || null, // URL fra Supabase Storage.
     };
 
-    // Sett inn en ny rad i "beers" tabellen i Supabase
-    const { error } = await db.from('beers').insert([beer]);
+    let error;
 
+    if (editingBeerId) {
+      // Vi er i redigeringsmodus, oppdater eksisterende rad i databasen.
+      // .eq('id', editingBeerId) betyr, der id kolonnen er lik denne IDen.
+      ({ error } = await db.from('beers').update(beer).eq('id', editingBeerId));
+    } else {
+      // Vi legger til en ny øl, sett inn en ny rad i databasen.
+      ({ error } = await db.from('beers').insert([beer]));
+    }
+
+    // Aktiver knappen igjen etter at Supabase har svart.
     btn.disabled = false;
-    btn.textContent = 'Legg til øl';
 
-    if (error) { alert('Feil ved lagring: ' + error.message); return; }
+    if (error) {
+      // noe gikk galt, vis feilmelding og sett knapp teksten tilbake
+      btn.textContent = editingBeerId ? 'Oppdater øl' : 'Legg til øl';
+      alert('Feil ved lagring: ' + error.message);
+      return;
+    }
 
-    // Tøm alle skjemafelt etter vellykket lagring
+    // Oppdater toast melding basert på om vi la til eller redigerte.
+    document.getElementById('toast').textContent = editingBeerId ? '✓ Øl oppdatert!' : '✓ Øl lagt til!';
+    
+    cancelEdit(); // Nullstill skjemaet og gå ut av redigeringsmodus
+    loadList(); // oppdater øllisten til høyre.
+    showToast(); // Vis bekreftelsesmelding nederst på siden.
+  }
+
+  // FYLLER SKJEMAET MED EKSISTERENDE ØLDATA FOR REDIGERING
+  function editBeer(b) {
+    // Lagre IDen så vi vet hvilken øl vi oppdaterer
+    editingBeerId = b.id;
+
+    // Fyll inn alle skjemafelt med eksisterende data
+    document.getElementById('f-name').value = b.name || '';
+    document.getElementById('f-brewery').value = b.brewery || '';
+    document.getElementById('f-type').value = b.type || '';
+    document.getElementById('f-abv').value = b.abv || '';
+    document.getElementById('f-country').value = b.country || '';
+    document.getElementById('f-score').value = b.score || 7;
+    document.getElementById('f-review').value = b.review || '';
+    updateScore();
+
+    // Vis eksisterende bilde hvis det finnes
+    if (b.image_url) {
+      document.getElementById('img-preview').innerHTML = `
+        <img src="${b.image_url}" alt="${b.name}" />
+        <button class="remove-img-btn" onclick="removeImage()">✕</button>
+      `;
+      uploadedImageUrl = b.image_url; // Behold eksisterende bilde-URL
+    } else {
+      document.getElementById('img-preview').innerHTML = '🍺';
+      uploadedImageUrl = null;
+    }
+
+    // Bytt til redigeringsmodus
+    document.getElementById('form-title').textContent = 'Rediger øl';
+    document.getElementById('submit-btn').textContent = 'Oppdater øl';
+    document.getElementById('cancel-btn').style.display = 'block';
+    document.getElementById('form-card').classList.add('editing');
+
+    // Scroll opp til skjemaet
+    document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // Avbryt redigering og tilbakestill skjemaet
+  function cancelEdit() {
+    // Nullstill redigeringsvariabler
+    editingBeerId = null;
+    uploadedImageUrl = null;
+
+    // Tøm alle skjemafelt
     ['f-name','f-brewery','f-type','f-abv','f-country','f-review'].forEach(id => {
       document.getElementById(id).value = '';
     });
     document.getElementById('f-score').value = 7;
-    document.getElementById('file-input').value = ''; // Nullstill fil input
+    document.getElementById('file-input').value = '';
     updateScore();
-    document.getElementById('img-preview').innerHTML = '🍺'; // Tilbakestill forhåndsvisning
-    uploadedImageUrl = null; // Nullstill den lagrede bilde URLen
 
-    loadList(); // Oppdater øllisten til høyre
-    showToast(); // Vis bekreftelsesmelding
+    // Tilbakestill bildeforhåndsvisning
+    document.getElementById('img-preview').innerHTML = '🍺';
+
+    // Bytt tilbake til normalmodus
+    document.getElementById('form-title').textContent = 'Legg til ny øl';
+    document.getElementById('submit-btn').textContent = 'Legg til øl';
+    document.getElementById('cancel-btn').style.display = 'none';
+    document.getElementById('form-card').classList.remove('editing');
+  }
+
+  // Fjern bilde fra forhåndsvisning
+  function removeImage() {
+    // Nullstill bilde-URL og forhåndsvisning
+    uploadedImageUrl = null;
+    document.getElementById('img-preview').innerHTML = '🍺';
+    document.getElementById('file-input').value = '';
   }
 
   // Sletter en øl fra databasen, og bildet fra Storage
@@ -453,7 +543,8 @@
           <!-- Vis bryggeri og type, eller "Ingen info" hvis begge mangler -->
           <div class="beer-list-meta">${[b.brewery, b.type].filter(Boolean).join(' · ') || 'Ingen info'}</div>
         </div>
-        <span class="score-pill">${b.score}/10</span>
+        <span class="score-pill">${parseFloat(b.score).toFixed(1)}/10</span>
+        <button class="btn-edit" onclick='editBeer(${JSON.stringify(b).replace(/'/g, "&#39;")})' title="Rediger">✏️</button>
         <button class="btn-delete" onclick="deleteBeer(${b.id}, ${b.image_url ? `'${b.image_url}'` : 'null'})" title="Slett">✕</button>
       </div>
     `).join('');
