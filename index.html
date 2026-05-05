@@ -117,6 +117,14 @@
     .tag-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
     .tag { background: var(--cream2); border: 1px solid var(--border); color: var(--mid); font-size: 0.8rem; padding: 3px 10px; border-radius: 20px; }
 
+    /* Lightbox – mørkt lag som dekker hele siden når bilde er forstørret */
+   .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 200; align-items: center; justify-content: center; cursor: zoom-out; }
+    .lightbox.open { display: flex; }
+    /* Selve bildet i lightbox */
+    .lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; }
+    /* Bildet i modal-popupen får en forstørrelsesglass-peker */
+    .modal-img img { cursor: zoom-in; }
+
     /* Laste animasjonen */
     .loading { text-align: center; padding: 4rem; color: var(--text-muted); }
     /* Snurrende øl emojien mens data hentes fra Supabase */
@@ -168,6 +176,10 @@
 
 <!-- Popup, skjult som standard, vises når man klikker på et ølkort -->
 <div class="modal-overlay" id="modal">
+  <!-- Lightbox for forstørret bilde -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <img id="lightbox-img" src="" alt="" />
+  </div>
   <div class="modal">
     <div class="modal-header">
       <!-- Ølnavnet fylles inn av JavaScript når popupen åpnes -->
@@ -309,7 +321,7 @@
     document.getElementById('modal-score').textContent = parseFloat(b.score).toFixed(1) + '/10';
     document.getElementById('modal-stars').textContent = scoreToStars(b.score);
     document.getElementById('modal-review').textContent = b.review || 'Ingen anmeldelse skrevet ennå.';
-    document.getElementById('modal-img').innerHTML = b.image_url ? `<img src="${b.image_url}" alt="${b.name}" />` : '🍺';
+    document.getElementById('modal-img').innerHTML = b.image_url ? `<img src="${b.image_url}" alt="${b.name}" onclick="openLightbox('${b.image_url}', '${b.name}')" />` : '🍺';
     
     // Bygg info "tags" for bryggeri, type, ABV og land, og sett dem inn i popupen
     const tags = [b.brewery, b.type, b.abv ? b.abv + ' %' : null, b.country].filter(Boolean);
@@ -322,6 +334,18 @@
   // Lukker popupen
   function closeModal() { document.getElementById('modal').classList.remove('open'); }
   
+  // Åpner bildet i full størrelse
+  function openLightbox(src, alt) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox-img').alt = alt;
+    document.getElementById('lightbox').classList.add('open');
+  }
+
+  // Lukker lightbox
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+  }
+
   // Lukk popupen hvis brukeren klikker på det mørke laget utenfor boksen
   document.getElementById('modal').addEventListener('click', e => { 
     if (e.target === document.getElementById('modal')) closeModal();
