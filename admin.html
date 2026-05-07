@@ -134,6 +134,19 @@
     Plassert utenfor skjermen som standard, skyves inn med animasjon
     */
     .success-toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--dark); color: var(--gold); padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; border: 1px solid var(--gold); transition: transform 0.3s; z-index: 200; }
+    
+    /* Bekreftelsesdialog for sletting */
+    .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(26,18,8,0.8); z-index: 300; align-items: center; justify-content: center; }
+    .confirm-overlay.open { display: flex; }
+    .confirm-box { background: white; border-radius: 16px; padding: 2rem; max-width: 360px; width: 100%; text-align: center; border: 1px solid var(--border-solid); }
+    .confirm-box h3 { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-bottom: 0.5rem; }
+    .confirm-box p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .confirm-buttons { display: flex; gap: 0.75rem; }
+    .confirm-btn-cancel { flex: 1; background: none; border: 1px solid var(--border-solid); color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; padding: 0.75rem; border-radius: 8px; cursor: pointer; }
+    .confirm-btn-cancel:hover { background: var(--cream2); }
+    .confirm-btn-delete { flex: 1; background: var(--danger); border: none; color: white; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; padding: 0.75rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .confirm-btn-delete:hover { background: #a93226; }
+    
     /* Skyves opp på skjermen når klassen "show" legges til */
     .success-toast.show { transform: translateX(-50%) translateY(0); }
   </style>
@@ -243,6 +256,19 @@
 
 <!-- Toast melding som dukker opp nederst etter vellykket lagring -->
 <div class="success-toast" id="toast">✓ Øl lagt til!</div>
+
+<!-- Bekreftelsesdialog for sletting -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div style="font-size:2.5rem;margin-bottom:1rem;">🗑️</div>
+    <h3>Slett øl</h3>
+    <p>Er du sikker på at du vil slette denne ølen? Dette kan ikke angres.</p>
+    <div class="confirm-buttons">
+      <button class="confirm-btn-cancel" onclick="closeConfirm()">Avbryt</button>
+      <button class="confirm-btn-delete" id="confirm-delete-btn">Slett</button>
+    </div>
+  </div>
+</div>
 
 <!-- JavaScript -->
 <script>
@@ -505,22 +531,32 @@
     document.getElementById('file-input').value = '';
   }
 
-  // Sletter en øl fra databasen, og bildet fra Storage
-  async function deleteBeer(id, imageUrl) {
-    if (!confirm('Slett denne ølen?')) return; // Bekreftelses dialog
+  // Viser fin bekreftelsesdialog før sletting
+  function deleteBeer(id, imageUrl) {
+    // Vis dialogen
+    document.getElementById('confirm-overlay').classList.add('open');
 
-    // Slett bildet fra Supabase Storage hvis det finnes
-    if (imageUrl) {
-      // Hent filnavnet fra URLen, det som er etter "/beer-images"
-      const path = imageUrl.split('/beer-images/')[1];
-      if (path) await db.storage.from('beer-images').remove([path]);
-    }
+    // Når bruker klikker "Slett" kjøres selve slettingen
+    document.getElementById('confirm-delete-btn').onclick = async () => {
+      closeConfirm();
 
-    // Slett raden fra "beers tabellen der id kolonner matcher"
-    const { error } = await db.from('beers').delete().eq('id', id);
-    if (error) { alert('Feil ved sletting: ' + error.message); return; }
-    
-    loadList(); // Oppdater listen etter sletting
+      // Slett bildet fra Supabase Storage hvis det finnes
+      if (imageUrl) {
+        const path = imageUrl.split('/beer-images/')[1];
+        if (path) await db.storage.from('beer-images').remove([path]);
+      }
+
+      // Slett raden fra databasen
+      const { error } = await db.from('beers').delete().eq('id', id);
+      if (error) { alert('Feil ved sletting: ' + error.message); return; }
+
+      loadList();
+    };
+  }
+
+  // Lukker bekreftelsesdialogen
+  function closeConfirm() {
+    document.getElementById('confirm-overlay').classList.remove('open');
   }
 
   // Henter og viser øllisten til høyre
